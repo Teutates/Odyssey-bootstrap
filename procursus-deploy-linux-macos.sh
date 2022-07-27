@@ -37,7 +37,7 @@ if [ "${ARM}" != yes ]; then
 	fi
 fi
 
-cp bootstrap.tar.gz $ODYSSEYDIR
+cp bootstrap-ssh.tar.gz $ODYSSEYDIR
 
 cd "$ODYSSEYDIR"
 
@@ -62,8 +62,8 @@ mount -o rw,union,update /dev/disk0s1s7
 mkdir -p /private/preboot/procursus
 rm -rf /private/var/jb
 ln -s /private/preboot/procursus /private/var/jb
-gzip -d bootstrap.tar.gz
-tar --preserve-permissions -xkf bootstrap.tar -C /
+gzip -d bootstrap-ssh.tar.gz
+tar --preserve-permissions -xkf bootstrap-ssh.tar -C /
 
 export PATH=/var/jb/usr/local/sbin:/var/jb/usr/local/bin:/var/jb/usr/sbin:/var/jb/usr/bin:/var/jb/sbin:/var/jb/bin:/var/jb/usr/bin/X11:/var/jb/usr/games
 
@@ -99,7 +99,7 @@ IPROXY=$(iproxy 28605 44 >/dev/null 2>&1 & echo $!)
 if [ ! "${ARM}" = yes ]; then
 	echo "(2) Copying resources to your device..."
 	echo "Default password is: alpine"
-	scp -qP28605 -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" bootstrap.tar.gz \
+	scp -qP28605 -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" bootstrap-ssh.tar.gz \
 		odysseyra1n-install.bash \
 		root@127.0.0.1:/var/root/
 fi
