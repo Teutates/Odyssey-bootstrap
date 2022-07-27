@@ -37,6 +37,8 @@ if [ "${ARM}" != yes ]; then
 	fi
 fi
 
+cp bootstrap.tar.gz $ODYSSEYDIR
+
 cd "$ODYSSEYDIR"
 
 echo '#!/bin/bash' > odysseyra1n-install.bash
@@ -54,65 +56,50 @@ if [[ -f "/.installed_odyssey" ]]; then
         rm ./bootstrap* ./*.deb odysseyra1n-install.bash
         exit 1
 fi
-VER=$(/binpack/usr/bin/plutil -key ProductVersion /System/Library/CoreServices/SystemVersion.plist)
-if [[ "${VER%%.*}" -ge 12 ]] && [[ "${VER%%.*}" -lt 13 ]]; then
-    CFVER=1500
-elif [[ "${VER%%.*}" -ge 13 ]] && [[ "${VER%%.*}" -lt 14 ]]; then
-    CFVER=1600
-elif [[ "${VER%%.*}" -ge 14 ]] && [[ "${VER%%.*}" -lt 15 ]]; then
-    CFVER=1700
-else
-    echo "${VER} not compatible."
-    exit 1
-fi
-mount -o rw,union,update /dev/disk0s1s1
-rm -rf /etc/{alternatives,apt,ssl,ssh,dpkg,profile{,.d}} /Library/dpkg /var/{cache,lib}
-gzip -d bootstrap_${CFVER}.tar.gz
-tar --preserve-permissions -xkf bootstrap_${CFVER}.tar -C /
-SNAPSHOT=$(snappy -s | cut -d ' ' -f 3 | tr -d '\n')
 
-snappy -f / -r "$SNAPSHOT" -t orig-fs > /dev/null 2>&1
-/prep_bootstrap.sh
-/usr/libexec/firmware
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/bin/X11:/usr/games
-if [[ $VER = 12.1* ]] || [[ $VER = 12.0* ]]; then
-    dpkg -i org.swift.libswift_5.0-electra2_iphoneos-arm.deb > /dev/null
-fi
+mount -o rw,union,update /dev/disk0s1s7
+#rm -rf /etc/{alternatives,apt,ssl,ssh,dpkg,profile{,.d}} /Library/dpkg /var/{cache,lib}
+mkdir -p /private/preboot/procursus
+rm -rf /private/var/jb
+ln -s /private/preboot/procursus /private/var/jb
+gzip -d bootstrap.tar.gz
+tar --preserve-permissions -xkf bootstrap.tar -C /
+
+export PATH=/var/jb/usr/local/sbin:/var/jb/usr/local/bin:/var/jb/usr/sbin:/var/jb/usr/bin:/var/jb/sbin:/var/jb/bin:/var/jb/usr/bin/X11:/var/jb/usr/games
+
+/var/jb/prep_bootstrap.sh
 echo "(4) Installing Sileo and upgrading Procursus packages..."
-dpkg -i org.coolstar.sileo_2.3_iphoneos-arm.deb > /dev/null
-uicache -p /Applications/Sileo.app
-mkdir -p /etc/apt/sources.list.d /etc/apt/preferences.d
-{
-    echo "Types: deb"
-    echo "URIs: https://repo.theodyssey.dev/"
-    echo "Suites: ./"
-    echo "Components: "
-    echo ""   
-} > /etc/apt/sources.list.d/odyssey.sources
-touch /var/lib/dpkg/available
-touch /.mount_rw
-touch /.installed_odyssey
-apt-get update -o Acquire::AllowInsecureRepositories=true
-apt-get dist-upgrade -y --allow-downgrades --allow-unauthenticated
-uicache -p /var/binpack/Applications/loader.app
+#dpkg -i org.coolstar.sileo_2.3_iphoneos-arm.deb > /dev/null
+#uicache -p /Applications/Sileo.app
+#mkdir -p /var/jb/etc/apt/sources.list.d /var/jb/etc/apt/preferences.d
+#{
+#    echo "Types: deb"
+#    echo "URIs: https://repo.theodyssey.dev/"
+#    echo "Suites: ./"
+#    echo "Components: "
+#    echo ""
+#} > /etc/apt/sources.list.d/odyssey.sources
+touch /var/jb/var/lib/dpkg/available
+#touch /.mount_rw
+touch /var/jb/.installed_odyssey
+#apt-get update -o Acquire::AllowInsecureRepositories=true
+#apt-get dist-upgrade -y --allow-downgrades --allow-unauthenticated
+#uicache -p /var/binpack/Applications/loader.app
 rm ./bootstrap* ./*.deb odysseyra1n-install.bash
 echo "Done!"
 EOF
 
 echo "(1) Downloading resources..."
 IPROXY=$(iproxy 28605 44 >/dev/null 2>&1 & echo $!)
-curl -sLOOOOO https://github.com/coolstar/Odyssey-bootstrap/raw/master/bootstrap_1500.tar.gz \
-	https://github.com/coolstar/Odyssey-bootstrap/raw/master/bootstrap_1600.tar.gz \
-	https://github.com/coolstar/Odyssey-bootstrap/raw/master/bootstrap_1700.tar.gz \
-	https://github.com/coolstar/Odyssey-bootstrap/raw/master/org.coolstar.sileo_2.3_iphoneos-arm.deb \
-	https://github.com/coolstar/Odyssey-bootstrap/raw/master/org.swift.libswift_5.0-electra2_iphoneos-arm.deb
+#curl -sLOOOOO https://github.com/coolstar/Odyssey-bootstrap/raw/master/bootstrap_1500.tar.gz \
+#	https://github.com/coolstar/Odyssey-bootstrap/raw/master/bootstrap_1600.tar.gz \
+#	https://github.com/coolstar/Odyssey-bootstrap/raw/master/bootstrap_1700.tar.gz \
+#	https://github.com/coolstar/Odyssey-bootstrap/raw/master/org.coolstar.sileo_2.3_iphoneos-arm.deb \
+#	https://github.com/coolstar/Odyssey-bootstrap/raw/master/org.swift.libswift_5.0-electra2_iphoneos-arm.deb
 if [ ! "${ARM}" = yes ]; then
 	echo "(2) Copying resources to your device..."
 	echo "Default password is: alpine"
-	scp -qP28605 -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" bootstrap_1500.tar.gz \
-		bootstrap_1600.tar.gz bootstrap_1700.tar.gz \
-		org.coolstar.sileo_2.3_iphoneos-arm.deb \
-		org.swift.libswift_5.0-electra2_iphoneos-arm.deb \
+	scp -qP28605 -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" bootstrap.tar.gz \
 		odysseyra1n-install.bash \
 		root@127.0.0.1:/var/root/
 fi
