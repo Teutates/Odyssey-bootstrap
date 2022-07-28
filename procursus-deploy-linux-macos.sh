@@ -57,7 +57,7 @@ if [[ -f "/.installed_odyssey" ]]; then
         exit 1
 fi
 
-mount -o rw,union,update /dev/disk0s1s7
+mount -u -w /private/preboot
 #rm -rf /etc/{alternatives,apt,ssl,ssh,dpkg,profile{,.d}} /Library/dpkg /var/{cache,lib}
 mkdir -p /private/preboot/procursus
 rm -rf /private/var/jb
